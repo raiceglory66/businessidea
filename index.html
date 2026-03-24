@@ -467,6 +467,56 @@
         margin-top: 14px;
       }
 
+      .data-table-wrap {
+        overflow: auto;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 720px;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 12px 14px;
+        text-align: left;
+        border-bottom: 1px solid rgba(35, 31, 32, 0.06);
+      }
+
+      .data-table th {
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .data-table td:last-child,
+      .data-table th:last-child {
+        text-align: right;
+      }
+
+      .data-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .data-chip.income {
+        color: var(--good);
+        background: rgba(31, 122, 70, 0.1);
+      }
+
+      .data-chip.expense {
+        color: var(--bad);
+        background: rgba(180, 35, 24, 0.1);
+      }
+
       .legend .pill {
         padding: 7px 10px;
       }
@@ -616,6 +666,32 @@
 
             <div class="feed" id="feed"></div>
           </section>
+
+          <section class="panel fade-up">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Demo / Source Data</span>
+                <h2>Какие данные анализируются</h2>
+                <p>После нажатия на demo-кнопку здесь показываются транзакции из встроенного набора.</p>
+              </div>
+              <span class="pill" id="dataTableLabel">Нет данных</span>
+            </div>
+
+            <div class="data-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Дата</th>
+                    <th>Тип</th>
+                    <th>Категория</th>
+                    <th>Описание</th>
+                    <th>Сумма</th>
+                  </tr>
+                </thead>
+                <tbody id="sourceDataTable"></tbody>
+              </table>
+            </div>
+          </section>
         </div>
 
         <aside class="side-grid">
@@ -694,6 +770,8 @@
       const feed = document.getElementById("feed");
       const summaryGrid = document.getElementById("summaryGrid");
       const categoryTable = document.getElementById("categoryTable");
+      const dataTableLabel = document.getElementById("dataTableLabel");
+      const sourceDataTable = document.getElementById("sourceDataTable");
 
       const demoCsv = `date,amount,type,category,description
 2026-01-03,42000,income,Sales,Enterprise subscription
@@ -1092,6 +1170,7 @@
         renderFeed(insights);
         renderSummary(summary);
         renderCategories(categoryDeltas);
+        renderSourceTable(transactions, label);
       }
 
       function renderKpis(current, previous) {
@@ -1207,6 +1286,24 @@
           .join("");
       }
 
+      function renderSourceTable(transactions, label) {
+        dataTableLabel.textContent = `${label} • ${transactions.length} rows`;
+        sourceDataTable.innerHTML = transactions
+          .slice(0, 14)
+          .map(
+            (item) => `
+              <tr>
+                <td>${item.date}</td>
+                <td><span class="data-chip ${item.type}">${item.type}</span></td>
+                <td>${item.category}</td>
+                <td>${item.description || "—"}</td>
+                <td>${item.type === "expense" ? "-" : "+"}${formatCurrency(item.amount)}</td>
+              </tr>
+            `
+          )
+          .join("");
+      }
+
       function loadData(csvText, label) {
         try {
           const transactions = parseCsv(csvText);
@@ -1247,6 +1344,7 @@
         headlineSupport.textContent = "После загрузки появятся KPI и список управленческих решений без сложных отчётов и фильтров.";
         periodLabel.textContent = "Нет данных";
         feedPriority.textContent = "Нет активных триггеров";
+        dataTableLabel.textContent = "Нет данных";
         kpiGrid.innerHTML = "";
         summaryGrid.innerHTML = `
           <div class="summary-item">
@@ -1259,6 +1357,11 @@
           <tr>
             <td>Нет данных</td>
             <td>0</td>
+          </tr>
+        `;
+        sourceDataTable.innerHTML = `
+          <tr>
+            <td colspan="5">Загрузите CSV или нажмите “Запустить demo-данные”.</td>
           </tr>
         `;
         feed.innerHTML = `
