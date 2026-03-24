@@ -460,6 +460,37 @@
         font-size: 13px;
       }
 
+      .upload-notice {
+        display: none;
+        margin-top: 14px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        font-weight: 700;
+        line-height: 1.45;
+      }
+
+      .upload-notice.show {
+        display: block;
+      }
+
+      .upload-notice.success {
+        color: var(--good);
+        background: rgba(31, 122, 70, 0.12);
+        border: 1px solid rgba(31, 122, 70, 0.16);
+      }
+
+      .upload-notice.info {
+        color: #a14411;
+        background: rgba(255, 107, 44, 0.12);
+        border: 1px solid rgba(255, 107, 44, 0.16);
+      }
+
+      .upload-notice.error {
+        color: var(--bad);
+        background: rgba(180, 35, 24, 0.12);
+        border: 1px solid rgba(180, 35, 24, 0.16);
+      }
+
       .legend {
         display: flex;
         flex-wrap: wrap;
@@ -624,6 +655,7 @@
             <p class="helper" id="fileState">
               Формат: `date, amount, type, category, description`
             </p>
+            <div class="upload-notice" id="uploadNotice"></div>
           </div>
 
           <aside class="hero-side">
@@ -779,6 +811,7 @@
       const demoBtn = document.getElementById("demoBtn");
       const resetBtn = document.getElementById("resetBtn");
       const fileState = document.getElementById("fileState");
+      const uploadNotice = document.getElementById("uploadNotice");
       const sourceLabel = document.getElementById("sourceLabel");
       const transactionCount = document.getElementById("transactionCount");
       const periodCount = document.getElementById("periodCount");
@@ -1332,12 +1365,26 @@
         panel.classList.add("flash");
       }
 
+      function showNotice(message, tone) {
+        uploadNotice.className = `upload-notice show ${tone}`;
+        uploadNotice.textContent = message;
+      }
+
+      function hideNotice() {
+        uploadNotice.className = "upload-notice";
+        uploadNotice.textContent = "";
+      }
+
       function loadData(csvText, label, options = {}) {
         try {
           const transactions = parseCsv(csvText);
           const analysis = buildAnalysis(transactions);
           renderDashboard(analysis, label);
           fileState.textContent = `Загружено: ${label}. Поддерживаемые колонки распознаны корректно.`;
+
+          if (options.noticeMessage) {
+            showNotice(options.noticeMessage, options.noticeTone || "success");
+          }
 
           if (options.focusSourceData) {
             flashPanel(sourceDataPanel);
@@ -1346,6 +1393,7 @@
         } catch (error) {
           fileState.textContent = error.message;
           fileState.style.color = "var(--bad)";
+          showNotice("Файл не удалось обработать. Проверь формат CSV и обязательные колонки.", "error");
         }
       }
 
@@ -1357,18 +1405,27 @@
 
         fileState.style.color = "var(--muted)";
         const text = await file.text();
-        loadData(text, file.name, { focusSourceData: true });
+        loadData(text, file.name, {
+          focusSourceData: true,
+          noticeTone: "success",
+          noticeMessage: `Файл ${file.name} успешно загружен. Данные подгружены в KPI и Decision Feed.`
+        });
       });
 
       demoBtn.addEventListener("click", () => {
         fileState.style.color = "var(--muted)";
-        loadData(demoCsv, "Demo dataset", { focusSourceData: true });
+        loadData(demoCsv, "Demo dataset", {
+          focusSourceData: true,
+          noticeTone: "info",
+          noticeMessage: "Demo-данные загружены. Витрина и расчёты обновлены на встроенном наборе."
+        });
       });
 
       resetBtn.addEventListener("click", () => {
         csvInput.value = "";
         fileState.style.color = "var(--muted)";
         fileState.textContent = "Формат: `date, amount, type, category, description`";
+        hideNotice();
         sourceLabel.textContent = "Нет данных";
         transactionCount.textContent = "0";
         periodCount.textContent = "0";
