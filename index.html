@@ -1,0 +1,1274 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI CFO Decision Engine MVP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f4efe6;
+        --panel: rgba(255, 251, 245, 0.88);
+        --panel-strong: #fffaf3;
+        --line: rgba(35, 31, 32, 0.08);
+        --text: #1f1d1c;
+        --muted: #645e59;
+        --accent: #ff6b2c;
+        --accent-2: #163b36;
+        --accent-3: #f1b43c;
+        --good: #1f7a46;
+        --warn: #b86800;
+        --bad: #b42318;
+        --shadow: 0 24px 70px rgba(34, 28, 21, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(255, 107, 44, 0.18), transparent 28%),
+          radial-gradient(circle at top right, rgba(22, 59, 54, 0.14), transparent 32%),
+          linear-gradient(180deg, #efe7da 0%, #f8f3eb 48%, #efe5d4 100%);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(31, 29, 28, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(31, 29, 28, 0.025) 1px, transparent 1px);
+        background-size: 26px 26px;
+        mask-image: radial-gradient(circle at center, black 42%, transparent 95%);
+      }
+
+      .page {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 24px 0 48px;
+      }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(35, 31, 32, 0.08);
+        border-radius: 32px;
+        padding: 28px;
+        background:
+          linear-gradient(140deg, rgba(255, 250, 243, 0.96), rgba(255, 241, 224, 0.9)),
+          var(--panel-strong);
+        box-shadow: var(--shadow);
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        right: -50px;
+        top: -70px;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 107, 44, 0.24), transparent 70%);
+      }
+
+      .hero-grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
+        gap: 22px;
+        z-index: 1;
+      }
+
+      .eyebrow,
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow {
+        background: rgba(22, 59, 54, 0.09);
+        color: var(--accent-2);
+      }
+
+      .pill {
+        background: rgba(255, 107, 44, 0.12);
+        color: #a14411;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+      }
+
+      h1 {
+        margin-top: 18px;
+        max-width: 11ch;
+        font-family: "Fraunces", serif;
+        font-size: clamp(42px, 7vw, 74px);
+        line-height: 0.94;
+      }
+
+      .subtitle {
+        margin-top: 16px;
+        max-width: 58ch;
+        color: var(--muted);
+        font-size: clamp(16px, 2.3vw, 20px);
+        line-height: 1.5;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      button,
+      .upload-label {
+        appearance: none;
+        border: 0;
+        border-radius: 16px;
+        padding: 14px 18px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+      }
+
+      button:hover,
+      .upload-label:hover {
+        transform: translateY(-1px);
+      }
+
+      .primary {
+        color: white;
+        background: linear-gradient(135deg, var(--accent), #ff8d38);
+        box-shadow: 0 14px 32px rgba(255, 107, 44, 0.28);
+      }
+
+      .secondary {
+        color: var(--accent-2);
+        background: rgba(22, 59, 54, 0.08);
+      }
+
+      .ghost {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(35, 31, 32, 0.08);
+      }
+
+      #csvInput {
+        display: none;
+      }
+
+      .upload-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: white;
+        background: var(--accent-2);
+        box-shadow: 0 14px 28px rgba(22, 59, 54, 0.18);
+      }
+
+      .hero-side,
+      .panel {
+        border: 1px solid rgba(35, 31, 32, 0.08);
+        border-radius: 24px;
+        background: rgba(255, 250, 243, 0.86);
+      }
+
+      .hero-side {
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .side-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .mini-card {
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.62);
+      }
+
+      .mini-card span,
+      .metric-card span,
+      .insight-top span,
+      .section-note,
+      .feed-meta,
+      .table th {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .mini-card strong,
+      .metric-card strong {
+        display: block;
+        margin-top: 6px;
+        font-size: clamp(18px, 2vw, 24px);
+      }
+
+      .status-card {
+        padding: 16px;
+        border-radius: 18px;
+        background: linear-gradient(145deg, rgba(22, 59, 54, 0.95), rgba(14, 30, 28, 0.95));
+        color: white;
+      }
+
+      .status-card p {
+        margin: 10px 0 0;
+        color: rgba(255, 255, 255, 0.76);
+        line-height: 1.45;
+      }
+
+      .content {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.82fr);
+        gap: 18px;
+      }
+
+      .panel {
+        padding: 22px;
+        box-shadow: 0 18px 44px rgba(56, 43, 34, 0.06);
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .panel-head p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .metric-card {
+        padding: 18px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(35, 31, 32, 0.05);
+      }
+
+      .metric-foot {
+        margin-top: 10px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .metric-foot.up {
+        color: var(--good);
+      }
+
+      .metric-foot.down {
+        color: var(--bad);
+      }
+
+      .metric-foot.flat {
+        color: var(--warn);
+      }
+
+      .feed {
+        display: grid;
+        gap: 14px;
+      }
+
+      .insight {
+        position: relative;
+        overflow: hidden;
+        padding: 18px;
+        border-radius: 22px;
+        border: 1px solid rgba(35, 31, 32, 0.06);
+        background: rgba(255, 255, 255, 0.78);
+      }
+
+      .insight::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 6px;
+        border-radius: 22px;
+      }
+
+      .insight.critical::before {
+        background: var(--bad);
+      }
+
+      .insight.warning::before {
+        background: var(--warn);
+      }
+
+      .insight.opportunity::before {
+        background: var(--good);
+      }
+
+      .insight-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .insight-top strong {
+        font-size: 15px;
+      }
+
+      .insight h3 {
+        margin-top: 12px;
+        font-size: clamp(21px, 3.4vw, 29px);
+        line-height: 1.08;
+      }
+
+      .stack {
+        display: grid;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .stack-item {
+        padding: 14px;
+        border-radius: 18px;
+      }
+
+      .problem {
+        background: rgba(180, 35, 24, 0.08);
+      }
+
+      .cause {
+        background: rgba(184, 104, 0, 0.1);
+      }
+
+      .action {
+        background: rgba(31, 122, 70, 0.1);
+      }
+
+      .stack-item label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .feed-empty {
+        padding: 22px;
+        border-radius: 22px;
+        background: rgba(31, 122, 70, 0.08);
+        color: var(--accent-2);
+        line-height: 1.5;
+      }
+
+      .side-grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .summary-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .summary-item {
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .summary-item strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 18px;
+      }
+
+      .table-wrap {
+        overflow: auto;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .table th,
+      .table td {
+        padding: 10px 0;
+        text-align: left;
+        border-bottom: 1px solid rgba(35, 31, 32, 0.06);
+      }
+
+      .table td:last-child,
+      .table th:last-child {
+        text-align: right;
+      }
+
+      .source-box {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(22, 59, 54, 0.06);
+      }
+
+      .source-box p,
+      .helper {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .helper {
+        margin-top: 10px;
+        font-size: 13px;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .legend .pill {
+        padding: 7px 10px;
+      }
+
+      .fade-up {
+        animation: fade-up 500ms ease both;
+      }
+
+      @keyframes fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 980px) {
+        .hero-grid,
+        .content {
+          grid-template-columns: 1fr;
+        }
+
+        .kpi-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 640px) {
+        .page {
+          width: min(100% - 20px, 1180px);
+          padding-top: 12px;
+        }
+
+        .hero,
+        .panel {
+          padding: 18px;
+          border-radius: 24px;
+        }
+
+        .hero-actions,
+        .panel-head {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        button,
+        .upload-label {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .side-metrics,
+        .kpi-grid {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: clamp(38px, 14vw, 58px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero fade-up">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">AI CFO • Decision Engine MVP</span>
+            <h1>Покажи, где бизнес теряет деньги.</h1>
+            <p class="subtitle">
+              Загрузите CSV с транзакциями, и система сама покажет, что не так, почему
+              это произошло и какие действия стоит предпринять прямо сейчас.
+            </p>
+            <div class="hero-actions">
+              <label class="upload-label" for="csvInput">Загрузить CSV</label>
+              <input id="csvInput" type="file" accept=".csv,text/csv" />
+              <button class="primary" id="demoBtn">Запустить demo-данные</button>
+              <button class="ghost" id="resetBtn">Сбросить</button>
+            </div>
+            <p class="helper" id="fileState">
+              Формат: `date, amount, type, category, description`
+            </p>
+          </div>
+
+          <aside class="hero-side">
+            <div>
+              <span class="pill">Decision feed first</span>
+              <div class="side-metrics">
+                <div class="mini-card">
+                  <span>Источник</span>
+                  <strong id="sourceLabel">Demo dataset</strong>
+                </div>
+                <div class="mini-card">
+                  <span>Транзакции</span>
+                  <strong id="transactionCount">0</strong>
+                </div>
+                <div class="mini-card">
+                  <span>Периодов</span>
+                  <strong id="periodCount">0</strong>
+                </div>
+                <div class="mini-card">
+                  <span>Инсайтов</span>
+                  <strong id="insightCount">0</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="status-card">
+              <strong id="headlineDecision">Система ожидает данные для анализа.</strong>
+              <p id="headlineSupport">
+                После загрузки появятся KPI и список управленческих решений без сложных
+                отчётов и фильтров.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="main-col">
+          <section class="panel fade-up">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">KPI</span>
+                <h2>Текущий месяц против предыдущего</h2>
+                <p>Ключевые показатели считаются детерминированно, без участия AI.</p>
+              </div>
+              <span class="pill" id="periodLabel">Нет данных</span>
+            </div>
+
+            <div class="kpi-grid" id="kpiGrid"></div>
+          </section>
+
+          <section class="panel fade-up">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Decision Feed</span>
+                <h2>Что делать</h2>
+                <p>Каждый инсайт содержит проблему, причину и рекомендуемое действие.</p>
+              </div>
+              <span class="pill" id="feedPriority">Нет активных триггеров</span>
+            </div>
+
+            <div class="feed" id="feed"></div>
+          </section>
+        </div>
+
+        <aside class="side-grid">
+          <section class="panel fade-up">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Summary</span>
+                <h2>Диагноз периода</h2>
+              </div>
+            </div>
+            <div class="summary-grid" id="summaryGrid"></div>
+            <div class="legend">
+              <span class="pill">Detection</span>
+              <span class="pill">Diagnosis</span>
+              <span class="pill">Action</span>
+            </div>
+          </section>
+
+          <section class="panel fade-up">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Categories</span>
+                <h2>Главные драйверы</h2>
+                <p>Категории с максимальным влиянием на изменения между месяцами.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Категория</th>
+                    <th>Изменение</th>
+                  </tr>
+                </thead>
+                <tbody id="categoryTable"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel fade-up">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Data Source</span>
+                <h2>Что умеет MVP</h2>
+              </div>
+            </div>
+            <div class="source-box">
+              <p>
+                Поддерживается обязательная загрузка CSV с полями `date`, `amount`,
+                `type`, `category`, `description`.
+              </p>
+              <p class="helper">
+                Интеграции, ML и кастомные отчёты намеренно не включены: фокус только на
+                сильных управленческих инсайтах.
+              </p>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const csvInput = document.getElementById("csvInput");
+      const demoBtn = document.getElementById("demoBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const fileState = document.getElementById("fileState");
+      const sourceLabel = document.getElementById("sourceLabel");
+      const transactionCount = document.getElementById("transactionCount");
+      const periodCount = document.getElementById("periodCount");
+      const insightCount = document.getElementById("insightCount");
+      const headlineDecision = document.getElementById("headlineDecision");
+      const headlineSupport = document.getElementById("headlineSupport");
+      const periodLabel = document.getElementById("periodLabel");
+      const feedPriority = document.getElementById("feedPriority");
+      const kpiGrid = document.getElementById("kpiGrid");
+      const feed = document.getElementById("feed");
+      const summaryGrid = document.getElementById("summaryGrid");
+      const categoryTable = document.getElementById("categoryTable");
+
+      const demoCsv = `date,amount,type,category,description
+2026-01-03,42000,income,Sales,Enterprise subscription
+2026-01-08,18500,income,Sales,SMB retainers
+2026-01-10,7000,expense,Marketing,Meta ads
+2026-01-11,3400,expense,Payroll,Contract designer
+2026-01-13,1900,expense,Software,SaaS tools
+2026-01-15,2600,expense,Operations,Office rent
+2026-01-18,3600,expense,Logistics,Delivery
+2026-01-21,8200,expense,Payroll,Analyst salary
+2026-01-25,2800,expense,Marketing,Creative production
+2026-02-03,39800,income,Sales,Enterprise renewal
+2026-02-07,14100,income,Sales,SMB retainers
+2026-02-08,9700,expense,Marketing,Meta ads scale-up
+2026-02-10,4100,expense,Payroll,Contract designer
+2026-02-11,2200,expense,Software,SaaS expansion
+2026-02-14,2600,expense,Operations,Office rent
+2026-02-16,3900,expense,Logistics,Delivery
+2026-02-20,8200,expense,Payroll,Analyst salary
+2026-02-23,4100,expense,Marketing,Agency fee
+2026-03-02,28600,income,Sales,Enterprise downgrade
+2026-03-04,10700,income,Sales,SMB retainers
+2026-03-06,12100,expense,Marketing,Meta ads scale-up
+2026-03-08,5300,expense,Payroll,Recruitment support
+2026-03-10,2400,expense,Software,New analytics tools
+2026-03-12,2600,expense,Operations,Office rent
+2026-03-14,4700,expense,Logistics,Delayed shipments
+2026-03-17,8200,expense,Payroll,Analyst salary
+2026-03-22,5200,expense,Marketing,Creative production
+2026-03-26,1900,expense,Operations,Legal review
+2026-04-03,36100,income,Sales,Enterprise partial recovery
+2026-04-06,16800,income,Sales,SMB retainers
+2026-04-08,8800,expense,Marketing,Channel cut
+2026-04-11,4200,expense,Payroll,Recruitment support
+2026-04-13,2200,expense,Software,Analytics tools
+2026-04-16,2600,expense,Operations,Office rent
+2026-04-18,3500,expense,Logistics,Delivery
+2026-04-20,8200,expense,Payroll,Analyst salary
+2026-04-24,1900,expense,Operations,Finance consultant`;
+
+      function parseCsv(csvText) {
+        const lines = csvText.trim().split(/\r?\n/);
+        if (lines.length < 2) {
+          throw new Error("CSV пустой или не содержит данных.");
+        }
+
+        const headers = splitCsvLine(lines[0]).map((item) => normalizeText(item));
+        const requiredHeaders = ["date", "amount", "type", "category", "description"];
+
+        requiredHeaders.forEach((header) => {
+          if (!headers.includes(header)) {
+            throw new Error(`В CSV отсутствует колонка ${header}.`);
+          }
+        });
+
+        return lines.slice(1).map((line, index) => {
+          const values = splitCsvLine(line);
+          const row = Object.fromEntries(headers.map((header, columnIndex) => [header, values[columnIndex] || ""]));
+          const amount = Number(String(row.amount).replace(",", "."));
+          const type = normalizeText(row.type);
+          const date = new Date(row.date);
+
+          if (Number.isNaN(amount) || !(type === "income" || type === "expense") || Number.isNaN(date.getTime())) {
+            throw new Error(`Некорректная строка ${index + 2}. Проверьте date, amount и type.`);
+          }
+
+          return {
+            date: row.date,
+            month: row.date.slice(0, 7),
+            amount,
+            type,
+            category: row.category ? row.category.trim() : "Uncategorized",
+            description: row.description ? row.description.trim() : ""
+          };
+        });
+      }
+
+      function splitCsvLine(line) {
+        const parts = [];
+        let current = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i += 1) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === "," && !inQuotes) {
+            parts.push(current.trim());
+            current = "";
+          } else {
+            current += char;
+          }
+        }
+
+        parts.push(current.trim());
+        return parts.map((item) => item.replace(/^"|"$/g, ""));
+      }
+
+      function normalizeText(value) {
+        return String(value || "")
+          .trim()
+          .toLowerCase();
+      }
+
+      function groupByMonth(transactions) {
+        const monthMap = new Map();
+
+        transactions.forEach((item) => {
+          if (!monthMap.has(item.month)) {
+            monthMap.set(item.month, {
+              month: item.month,
+              revenue: 0,
+              expenses: 0,
+              cashflow: 0,
+              transactions: [],
+              categories: {}
+            });
+          }
+
+          const bucket = monthMap.get(item.month);
+          bucket.transactions.push(item);
+
+          if (item.type === "income") {
+            bucket.revenue += item.amount;
+            bucket.cashflow += item.amount;
+          } else {
+            bucket.expenses += item.amount;
+            bucket.cashflow -= item.amount;
+          }
+
+          if (!bucket.categories[item.category]) {
+            bucket.categories[item.category] = { income: 0, expense: 0 };
+          }
+
+          bucket.categories[item.category][item.type] += item.amount;
+        });
+
+        return Array.from(monthMap.values())
+          .sort((a, b) => a.month.localeCompare(b.month))
+          .map((month) => ({
+            ...month,
+            profit: month.revenue - month.expenses
+          }));
+      }
+
+      function buildAnalysis(transactions) {
+        const months = groupByMonth(transactions);
+        const current = months.at(-1);
+        const previous = months.at(-2) || null;
+
+        if (!current) {
+          throw new Error("Нет транзакций для анализа.");
+        }
+
+        const categoryDeltas = buildCategoryDeltas(current, previous);
+        const insights = buildInsights(current, previous, categoryDeltas);
+        const summary = buildSummary(current, previous, categoryDeltas, insights);
+
+        return { transactions, months, current, previous, insights, summary, categoryDeltas };
+      }
+
+      function buildCategoryDeltas(current, previous) {
+        const allCategories = new Set([
+          ...Object.keys(current.categories || {}),
+          ...Object.keys(previous?.categories || {})
+        ]);
+
+        return Array.from(allCategories)
+          .map((category) => {
+            const currentExpense = current.categories?.[category]?.expense || 0;
+            const previousExpense = previous?.categories?.[category]?.expense || 0;
+            const currentIncome = current.categories?.[category]?.income || 0;
+            const previousIncome = previous?.categories?.[category]?.income || 0;
+
+            return {
+              category,
+              expenseDelta: currentExpense - previousExpense,
+              incomeDelta: currentIncome - previousIncome,
+              currentExpense,
+              previousExpense,
+              currentIncome,
+              previousIncome
+            };
+          })
+          .sort((a, b) => Math.abs(b.expenseDelta) + Math.abs(b.incomeDelta) - (Math.abs(a.expenseDelta) + Math.abs(a.incomeDelta)));
+      }
+
+      function buildInsights(current, previous, categoryDeltas) {
+        if (!previous) {
+          return [];
+        }
+
+        const insights = [];
+        const profitChangePct = percentChange(current.profit, previous.profit);
+        const expenseChangePct = percentChange(current.expenses, previous.expenses);
+        const revenueChangePct = percentChange(current.revenue, previous.revenue);
+        const topExpenseDriver = categoryDeltas
+          .filter((item) => item.expenseDelta > 0)
+          .sort((a, b) => b.expenseDelta - a.expenseDelta)[0];
+        const topRevenueDriver = categoryDeltas
+          .filter((item) => item.incomeDelta < 0)
+          .sort((a, b) => a.incomeDelta - b.incomeDelta)[0];
+
+        if (profitChangePct <= -20) {
+          const reasons = [];
+          if (expenseChangePct > 0) reasons.push(`расходы выросли на ${formatPercent(expenseChangePct)}`);
+          if (revenueChangePct < 0) reasons.push(`выручка снизилась на ${formatPercent(Math.abs(revenueChangePct))}`);
+          const majorDriver = topExpenseDriver ? `Главный драйвер: ${topExpenseDriver.category} +${formatCurrency(topExpenseDriver.expenseDelta)}.` : "";
+
+          insights.push({
+            key: "profit_drop",
+            severity: "critical",
+            priority: 100 + Math.abs(profitChangePct),
+            title: `Прибыль упала на ${formatPercent(Math.abs(profitChangePct))}`,
+            problem: `Текущая прибыль составила ${formatCurrency(current.profit)} против ${formatCurrency(previous.profit)} месяцем ранее.`,
+            cause: `${reasons.join(" и ")}. ${majorDriver}`.trim(),
+            action: topExpenseDriver
+              ? `Сократите ${topExpenseDriver.category} минимум на 10-15% и проверьте окупаемость каждой статьи расходов в этой категории.`
+              : "Пересмотрите самые крупные статьи затрат и заморозьте необязательные расходы до восстановления маржи."
+          });
+        }
+
+        if (expenseChangePct >= 15) {
+          const driver = topExpenseDriver;
+          insights.push({
+            key: "expense_growth",
+            severity: expenseChangePct >= 25 ? "critical" : "warning",
+            priority: 80 + expenseChangePct,
+            title: `Расходы выросли на ${formatPercent(expenseChangePct)}`,
+            problem: `Общий объём расходов достиг ${formatCurrency(current.expenses)} за месяц.`,
+            cause: driver
+              ? `${driver.category} дали прирост ${formatCurrency(driver.expenseDelta)}, это ${formatPercent(safePercent(driver.expenseDelta, previous.expenses))} от прошлых общих расходов.`
+              : "Рост распределён по нескольким категориям, без одного явного лидера.",
+            action: driver
+              ? `Временно ограничьте бюджет категории ${driver.category} и оставьте только траты с коротким ROI горизонтом.`
+              : "Введите недельный лимит по расходам и подтверждение для всех новых платежей выше среднего чека."
+          });
+        }
+
+        if (revenueChangePct <= -12) {
+          insights.push({
+            key: "revenue_drop",
+            severity: Math.abs(revenueChangePct) >= 20 ? "critical" : "warning",
+            priority: 75 + Math.abs(revenueChangePct),
+            title: `Выручка снизилась на ${formatPercent(Math.abs(revenueChangePct))}`,
+            problem: `В этом месяце бизнес получил ${formatCurrency(current.revenue)} вместо ${formatCurrency(previous.revenue)}.`,
+            cause: topRevenueDriver
+              ? `Наибольшее проседание связано с категорией ${topRevenueDriver.category}: ${formatCurrency(Math.abs(topRevenueDriver.incomeDelta))} недополученной выручки.`
+              : "Снижение распределено по нескольким источникам дохода.",
+            action: "Проверьте сделки, которые не закрылись в этом месяце, и запустите быстрый recovery-план по потерянной выручке."
+          });
+        }
+
+        const marketingShare = safePercent(current.categories?.Marketing?.expense || 0, current.expenses);
+        if (marketingShare >= 30) {
+          insights.push({
+            key: "marketing_share",
+            severity: marketingShare >= 40 ? "warning" : "opportunity",
+            priority: 45 + marketingShare,
+            title: `Маркетинг съедает ${formatPercent(marketingShare)} всех расходов`,
+            problem: `Доля маркетинга достигла ${formatPercent(marketingShare)} от total expenses.`,
+            cause: "Концентрация бюджета в одной категории повышает риск падения прибыли при слабой окупаемости каналов.",
+            action: "Перераспределите часть бюджета в прибыльные каналы и остановите кампании без подтверждённого ROMI."
+          });
+        }
+
+        const payrollShare = safePercent(current.categories?.Payroll?.expense || 0, current.expenses);
+        if (payrollShare >= 28) {
+          insights.push({
+            key: "payroll_load",
+            severity: "warning",
+            priority: 42 + payrollShare,
+            title: `Фиксированная нагрузка на payroll = ${formatPercent(payrollShare)}`,
+            problem: "Значимая часть ежемесячных расходов стала трудноуправляемой.",
+            cause: "Высокая fixed-cost база замедляет реакцию бизнеса на просадку выручки.",
+            action: "Проверьте, какие роли и подрядчики влияют на revenue напрямую, а какие можно перевести на гибкий формат."
+          });
+        }
+
+        const profitMargin = safePercent(current.profit, current.revenue);
+        if (profitMargin >= 25 && revenueChangePct > 0) {
+          insights.push({
+            key: "profit_strength",
+            severity: "opportunity",
+            priority: 30 + profitMargin,
+            title: `Маржа держится на уровне ${formatPercent(profitMargin)}`,
+            problem: "Бизнес сохраняет здоровую операционную подушку.",
+            cause: "Рост выручки опережает рост расходов или расходы уже стабилизированы.",
+            action: "Не масштабируйте все каналы сразу: увеличивайте только то, что показывает прогнозируемую прибыль на следующий месяц."
+          });
+        }
+
+        const unusualExpense = current.transactions
+          .filter((item) => item.type === "expense")
+          .sort((a, b) => b.amount - a.amount)[0];
+        const prevAverageExpense = previous.transactions.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0) /
+          Math.max(previous.transactions.filter((item) => item.type === "expense").length, 1);
+        if (unusualExpense && unusualExpense.amount >= prevAverageExpense * 2.2) {
+          insights.push({
+            key: "expense_anomaly",
+            severity: "warning",
+            priority: 55,
+            title: `Обнаружен аномальный расход ${formatCurrency(unusualExpense.amount)}`,
+            problem: `Трата "${unusualExpense.description || unusualExpense.category}" заметно выше обычного чека.`,
+            cause: `Средний расход в прошлом месяце был около ${formatCurrency(prevAverageExpense)}, текущая операция превышает его более чем в 2.2 раза.`,
+            action: "Проверьте, была ли эта трата разовой и согласованной. Если нет, поставьте ручное подтверждение для похожих платежей."
+          });
+        }
+
+        return insights
+          .sort((a, b) => b.priority - a.priority)
+          .slice(0, 7);
+      }
+
+      function buildSummary(current, previous, categoryDeltas, insights) {
+        const topExpenseDriver = categoryDeltas.find((item) => item.expenseDelta > 0);
+        const topRevenueDriver = categoryDeltas.find((item) => item.incomeDelta < 0);
+        const profitMargin = safePercent(current.profit, current.revenue);
+
+        return [
+          {
+            label: "Главный статус",
+            value: insights[0] ? insights[0].title : "Сильных триггеров нет",
+            note: previous ? `Сравнение ${current.month} к ${previous.month}` : "Нужен минимум один предыдущий месяц"
+          },
+          {
+            label: "Маржа",
+            value: formatPercent(profitMargin),
+            note: `Profit ${formatCurrency(current.profit)} при выручке ${formatCurrency(current.revenue)}`
+          },
+          {
+            label: "Драйвер расходов",
+            value: topExpenseDriver ? topExpenseDriver.category : "Без резкого роста",
+            note: topExpenseDriver ? `+${formatCurrency(topExpenseDriver.expenseDelta)} к прошлому месяцу` : "Крупных скачков не найдено"
+          },
+          {
+            label: "Драйвер выручки",
+            value: topRevenueDriver ? topRevenueDriver.category : "Стабильно",
+            note: topRevenueDriver ? `-${formatCurrency(Math.abs(topRevenueDriver.incomeDelta))} против прошлого месяца` : "Сильного падения не найдено"
+          }
+        ];
+      }
+
+      function percentChange(current, previous) {
+        if (previous === 0) {
+          if (current === 0) {
+            return 0;
+          }
+          return current > 0 ? 100 : -100;
+        }
+
+        if (!previous) {
+          return 0;
+        }
+
+        return ((current - previous) / Math.abs(previous)) * 100;
+      }
+
+      function safePercent(value, total) {
+        if (!total) {
+          return 0;
+        }
+        return (value / total) * 100;
+      }
+
+      function formatCurrency(value) {
+        return new Intl.NumberFormat("ru-RU", {
+          style: "currency",
+          currency: "USD",
+          maximumFractionDigits: 0
+        }).format(value);
+      }
+
+      function formatPercent(value) {
+        return `${Math.round(value)}%`;
+      }
+
+      function renderDashboard(analysis, label) {
+        const { transactions, months, current, previous, insights, summary, categoryDeltas } = analysis;
+        sourceLabel.textContent = label;
+        transactionCount.textContent = String(transactions.length);
+        periodCount.textContent = String(months.length);
+        insightCount.textContent = String(insights.length);
+        periodLabel.textContent = previous ? `${current.month} vs ${previous.month}` : current.month;
+        feedPriority.textContent = insights[0] ? insights[0].title : "Нет активных триггеров";
+
+        if (insights[0]) {
+          headlineDecision.textContent = insights[0].title;
+          headlineSupport.textContent = insights[0].action;
+        } else {
+          headlineDecision.textContent = "Явных критических отклонений не найдено.";
+          headlineSupport.textContent = "Можно использовать этот месяц как baseline для следующих сравнений.";
+        }
+
+        renderKpis(current, previous);
+        renderFeed(insights);
+        renderSummary(summary);
+        renderCategories(categoryDeltas);
+      }
+
+      function renderKpis(current, previous) {
+        const metrics = [
+          { label: "Revenue", value: current.revenue, previous: previous?.revenue || 0 },
+          { label: "Expenses", value: current.expenses, previous: previous?.expenses || 0 },
+          { label: "Profit", value: current.profit, previous: previous?.profit || 0 },
+          { label: "Cashflow", value: current.cashflow, previous: previous?.cashflow || 0 }
+        ];
+
+        kpiGrid.innerHTML = metrics
+          .map((metric) => {
+            const change = previous ? percentChange(metric.value, metric.previous) : 0;
+            const trendClass = !previous ? "flat" : change > 0 ? "up" : change < 0 ? "down" : "flat";
+            const trendPrefix = change > 0 ? "+" : "";
+
+            return `
+              <article class="metric-card">
+                <span>${metric.label}</span>
+                <strong>${formatCurrency(metric.value)}</strong>
+                <div class="metric-foot ${trendClass}">
+                  ${previous ? `${trendPrefix}${formatPercent(change)} MoM` : "Ожидается база для сравнения"}
+                </div>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function renderFeed(insights) {
+        if (!insights.length) {
+          feed.innerHTML = `
+            <div class="feed-empty">
+              Недостаточно периодов для Decision Feed. Загрузите минимум два месяца данных,
+              и система покажет проблемы, причины и действия.
+            </div>
+          `;
+          return;
+        }
+
+        feed.innerHTML = insights
+          .map((insight) => {
+            const severityLabel = {
+              critical: "Критично",
+              warning: "Внимание",
+              opportunity: "Возможность"
+            }[insight.severity];
+
+            return `
+              <article class="insight ${insight.severity}">
+                <div class="insight-top">
+                  <strong>${severityLabel}</strong>
+                  <span>${insight.key.replaceAll("_", " ")}</span>
+                </div>
+                <h3>${insight.title}</h3>
+                <div class="stack">
+                  <div class="stack-item problem">
+                    <label>Проблема</label>
+                    <div>${insight.problem}</div>
+                  </div>
+                  <div class="stack-item cause">
+                    <label>Причина</label>
+                    <div>${insight.cause}</div>
+                  </div>
+                  <div class="stack-item action">
+                    <label>Решение</label>
+                    <div>${insight.action}</div>
+                  </div>
+                </div>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function renderSummary(summary) {
+        summaryGrid.innerHTML = summary
+          .map(
+            (item) => `
+              <div class="summary-item">
+                <span class="section-note">${item.label}</span>
+                <strong>${item.value}</strong>
+                <div class="feed-meta">${item.note}</div>
+              </div>
+            `
+          )
+          .join("");
+      }
+
+      function renderCategories(categoryDeltas) {
+        const rows = categoryDeltas.slice(0, 6);
+        if (!rows.length) {
+          categoryTable.innerHTML = `
+            <tr>
+              <td>Нет данных</td>
+              <td>0</td>
+            </tr>
+          `;
+          return;
+        }
+
+        categoryTable.innerHTML = rows
+          .map((row) => {
+            const totalDelta = row.expenseDelta - row.incomeDelta;
+            const sign = totalDelta > 0 ? "+" : "";
+            return `
+              <tr>
+                <td>${row.category}</td>
+                <td>${sign}${formatCurrency(totalDelta)}</td>
+              </tr>
+            `;
+          })
+          .join("");
+      }
+
+      function loadData(csvText, label) {
+        try {
+          const transactions = parseCsv(csvText);
+          const analysis = buildAnalysis(transactions);
+          renderDashboard(analysis, label);
+          fileState.textContent = `Загружено: ${label}. Поддерживаемые колонки распознаны корректно.`;
+        } catch (error) {
+          fileState.textContent = error.message;
+          fileState.style.color = "var(--bad)";
+        }
+      }
+
+      csvInput.addEventListener("change", async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+          return;
+        }
+
+        fileState.style.color = "var(--muted)";
+        const text = await file.text();
+        loadData(text, file.name);
+      });
+
+      demoBtn.addEventListener("click", () => {
+        fileState.style.color = "var(--muted)";
+        loadData(demoCsv, "Demo dataset");
+      });
+
+      resetBtn.addEventListener("click", () => {
+        csvInput.value = "";
+        fileState.style.color = "var(--muted)";
+        fileState.textContent = "Формат: `date, amount, type, category, description`";
+        sourceLabel.textContent = "Нет данных";
+        transactionCount.textContent = "0";
+        periodCount.textContent = "0";
+        insightCount.textContent = "0";
+        headlineDecision.textContent = "Система ожидает данные для анализа.";
+        headlineSupport.textContent = "После загрузки появятся KPI и список управленческих решений без сложных отчётов и фильтров.";
+        periodLabel.textContent = "Нет данных";
+        feedPriority.textContent = "Нет активных триггеров";
+        kpiGrid.innerHTML = "";
+        summaryGrid.innerHTML = `
+          <div class="summary-item">
+            <span class="section-note">Ожидание данных</span>
+            <strong>Нет расчёта</strong>
+            <div class="feed-meta">Нужны транзакции минимум за один месяц.</div>
+          </div>
+        `;
+        categoryTable.innerHTML = `
+          <tr>
+            <td>Нет данных</td>
+            <td>0</td>
+          </tr>
+        `;
+        feed.innerHTML = `
+          <div class="feed-empty">
+            Загрузите CSV или используйте demo-данные, чтобы увидеть decision feed.
+          </div>
+        `;
+      });
+
+      demoBtn.click();
+    </script>
+  </body>
+</html>
