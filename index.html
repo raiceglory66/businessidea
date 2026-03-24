@@ -491,6 +491,48 @@
         border: 1px solid rgba(180, 35, 24, 0.16);
       }
 
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(31, 29, 28, 0.38);
+        backdrop-filter: blur(8px);
+        z-index: 30;
+      }
+
+      .modal-backdrop.show {
+        display: flex;
+      }
+
+      .modal {
+        width: min(100%, 380px);
+        padding: 22px;
+        border-radius: 24px;
+        background: var(--panel-strong);
+        border: 1px solid rgba(35, 31, 32, 0.08);
+        box-shadow: 0 24px 70px rgba(34, 28, 21, 0.2);
+      }
+
+      .modal p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .modal-actions button {
+        flex: 1;
+      }
+
       .legend {
         display: flex;
         flex-wrap: wrap;
@@ -806,6 +848,17 @@
       </section>
     </main>
 
+    <div class="modal-backdrop" id="resetModal" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
+        <h3 id="resetModalTitle">Сбросить данные?</h3>
+        <p>Текущие загруженные данные будут очищены. Продолжить?</p>
+        <div class="modal-actions">
+          <button class="primary" id="confirmResetBtn">Да</button>
+          <button class="ghost" id="cancelResetBtn">Нет</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       const csvInput = document.getElementById("csvInput");
       const demoBtn = document.getElementById("demoBtn");
@@ -827,6 +880,9 @@
       const dataTableLabel = document.getElementById("dataTableLabel");
       const sourceDataTable = document.getElementById("sourceDataTable");
       const sourceDataPanel = document.getElementById("sourceDataPanel");
+      const resetModal = document.getElementById("resetModal");
+      const confirmResetBtn = document.getElementById("confirmResetBtn");
+      const cancelResetBtn = document.getElementById("cancelResetBtn");
 
       const demoCsv = `date,amount,type,category,description
 2026-01-03,42000,income,Sales,Enterprise subscription
@@ -1375,6 +1431,56 @@
         uploadNotice.textContent = "";
       }
 
+      function openResetModal() {
+        resetModal.classList.add("show");
+        resetModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeResetModal() {
+        resetModal.classList.remove("show");
+        resetModal.setAttribute("aria-hidden", "true");
+      }
+
+      function performReset() {
+        csvInput.value = "";
+        fileState.style.color = "var(--muted)";
+        fileState.textContent = "Формат: `date, amount, type, category, description`";
+        hideNotice();
+        sourceLabel.textContent = "Нет данных";
+        transactionCount.textContent = "0";
+        periodCount.textContent = "0";
+        insightCount.textContent = "0";
+        headlineDecision.textContent = "Система ожидает данные для анализа.";
+        headlineSupport.textContent = "После загрузки появятся KPI и список управленческих решений без сложных отчётов и фильтров.";
+        periodLabel.textContent = "Нет данных";
+        feedPriority.textContent = "Нет активных триггеров";
+        dataTableLabel.textContent = "Нет данных";
+        kpiGrid.innerHTML = "";
+        summaryGrid.innerHTML = `
+          <div class="summary-item">
+            <span class="section-note">Ожидание данных</span>
+            <strong>Нет расчёта</strong>
+            <div class="feed-meta">Нужны транзакции минимум за один месяц.</div>
+          </div>
+        `;
+        categoryTable.innerHTML = `
+          <tr>
+            <td>Нет данных</td>
+            <td>0</td>
+          </tr>
+        `;
+        sourceDataTable.innerHTML = `
+          <tr>
+            <td colspan="5">Загрузите CSV или нажмите “Запустить demo-данные”.</td>
+          </tr>
+        `;
+        feed.innerHTML = `
+          <div class="feed-empty">
+            Загрузите CSV или используйте demo-данные, чтобы увидеть decision feed.
+          </div>
+        `;
+      }
+
       function loadData(csvText, label, options = {}) {
         try {
           const transactions = parseCsv(csvText);
@@ -1422,46 +1528,31 @@
       });
 
       resetBtn.addEventListener("click", () => {
-        csvInput.value = "";
-        fileState.style.color = "var(--muted)";
-        fileState.textContent = "Формат: `date, amount, type, category, description`";
-        hideNotice();
-        sourceLabel.textContent = "Нет данных";
-        transactionCount.textContent = "0";
-        periodCount.textContent = "0";
-        insightCount.textContent = "0";
-        headlineDecision.textContent = "Система ожидает данные для анализа.";
-        headlineSupport.textContent = "После загрузки появятся KPI и список управленческих решений без сложных отчётов и фильтров.";
-        periodLabel.textContent = "Нет данных";
-        feedPriority.textContent = "Нет активных триггеров";
-        dataTableLabel.textContent = "Нет данных";
-        kpiGrid.innerHTML = "";
-        summaryGrid.innerHTML = `
-          <div class="summary-item">
-            <span class="section-note">Ожидание данных</span>
-            <strong>Нет расчёта</strong>
-            <div class="feed-meta">Нужны транзакции минимум за один месяц.</div>
-          </div>
-        `;
-        categoryTable.innerHTML = `
-          <tr>
-            <td>Нет данных</td>
-            <td>0</td>
-          </tr>
-        `;
-        sourceDataTable.innerHTML = `
-          <tr>
-            <td colspan="5">Загрузите CSV или нажмите “Запустить demo-данные”.</td>
-          </tr>
-        `;
-        feed.innerHTML = `
-          <div class="feed-empty">
-            Загрузите CSV или используйте demo-данные, чтобы увидеть decision feed.
-          </div>
-        `;
+        openResetModal();
       });
 
-      resetBtn.click();
+      confirmResetBtn.addEventListener("click", () => {
+        performReset();
+        closeResetModal();
+      });
+
+      cancelResetBtn.addEventListener("click", () => {
+        closeResetModal();
+      });
+
+      resetModal.addEventListener("click", (event) => {
+        if (event.target === resetModal) {
+          closeResetModal();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && resetModal.classList.contains("show")) {
+          closeResetModal();
+        }
+      });
+
+      performReset();
     </script>
   </body>
 </html>
